@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Create superuser from ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD env vars'
+    help = 'Create or reset superuser from ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD env vars'
 
     def handle(self, *args, **options):
         username = os.environ.get('ADMIN_USERNAME', 'admin')
@@ -14,12 +14,15 @@ class Command(BaseCommand):
         password = os.environ.get('ADMIN_PASSWORD')
 
         if not password:
-            self.stderr.write('ADMIN_PASSWORD env var is required')
+            self.stderr.write('ADMIN_PASSWORD env var is required — skipping admin setup')
             return
 
-        if User.objects.filter(username=username).exists():
-            self.stdout.write(f'User "{username}" already exists — skipping')
-            return
+        user, created = User.objects.get_or_create(username=username)
+        user.email = email
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
 
-        User.objects.create_superuser(username=username, email=email, password=password)
-        self.stdout.write(self.style.SUCCESS(f'Superuser "{username}" created'))
+        action = 'created' if created else 'updated'
+        self.stdout.write(self.style.SUCCESS(f'Superuser "{username}" {action} successfully'))
