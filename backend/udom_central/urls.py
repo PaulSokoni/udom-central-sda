@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.throttling import AnonRateThrottle
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view, permission_classes
@@ -19,8 +20,15 @@ class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
 
 
+class CaseInsensitiveTokenSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        attrs[self.username_field] = attrs[self.username_field].lower().strip()
+        return super().validate(attrs)
+
+
 class RateLimitedTokenView(TokenObtainPairView):
     throttle_classes = [LoginRateThrottle]
+    serializer_class = CaseInsensitiveTokenSerializer
 
 
 @api_view(['GET'])
