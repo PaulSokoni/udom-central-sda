@@ -149,7 +149,7 @@ export default function Layout({ children }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{user?.full_name || user?.username}</p>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+            <p className="text-[11px] text-white/40 truncate">{user?.username}</p>
           </div>
           <button onClick={handleLogout} title="Sign out"
             className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/40 hover:text-red-300 transition-colors flex-shrink-0">
@@ -163,14 +163,9 @@ export default function Layout({ children }) {
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0">
-        <Sidebar />
-      </div>
-
-      {/* Mobile overlay */}
+      {/* Drawer — all screen sizes */}
       {open && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="relative z-10 flex flex-col h-full shadow-2xl">
             <Sidebar onClose={() => setOpen(false)} />
@@ -182,36 +177,31 @@ export default function Layout({ children }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
         <header className="flex-shrink-0 h-16 bg-white border-b border-gray-200 flex items-center px-4 md:px-6 gap-4 shadow-sm z-30">
-          {/* Mobile hamburger */}
+          {/* Hamburger — always visible */}
           <button onClick={() => setOpen(true)}
-            className="lg:hidden flex flex-col gap-1.5 p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            className="flex flex-col gap-1.5 p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <span className="w-5 h-0.5 bg-gray-700 rounded" />
             <span className="w-5 h-0.5 bg-gray-700 rounded" />
             <span className="w-4 h-0.5 bg-gray-700 rounded" />
           </button>
 
-          {/* Logo (mobile only) */}
-          <div className="lg:hidden flex items-center gap-2">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
             <img src="/sda.jpeg" alt="" className="w-8 h-8 rounded-full object-cover" />
-            <span className="font-bold text-blue-900 text-sm">UDOM Central SDA</span>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center text-white text-xs font-bold">UC</div>
-            <div>
-              <p className="text-sm font-semibold text-gray-800 leading-tight">UDOM Central SDA Church</p>
+            <div className="hidden sm:block">
+              <p className="text-sm font-semibold text-blue-900 leading-tight">UDOM Central SDA Church</p>
               <p className="text-xs text-gray-400">Management System</p>
             </div>
+            <span className="sm:hidden font-bold text-blue-900 text-sm">UDOM Central</span>
           </div>
 
           <div className="ml-auto flex items-center gap-2 md:gap-3">
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold">
                 {initials}
               </div>
               <div className="hidden md:block">
                 <p className="text-sm font-semibold text-gray-700 leading-tight">{user?.full_name || user?.username}</p>
-                <p className="text-xs text-gray-400">{badge.label}</p>
               </div>
             </div>
             <button onClick={handleLogout}
