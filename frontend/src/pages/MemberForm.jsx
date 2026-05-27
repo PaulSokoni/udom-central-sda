@@ -50,10 +50,12 @@ export default function MemberForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
+  const today = new Date().toISOString().split('T')[0];
+
   const [form, setForm] = useState({
     first_name: '', middle_name: '', last_name: '', gender: 'M',
     date_of_birth: '', marital_status: 'single', phone: '', email: '',
-    address: '', occupation: '', baptism_date: '', membership_date: '',
+    address: '', occupation: '', baptism_date: today, membership_date: today,
     membership_status: 'active', department: '', is_tithe_paying: false,
     emergency_contact_name: '', emergency_contact_phone: '', notes: '', registered_by: '',
   });
