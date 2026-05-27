@@ -99,8 +99,7 @@ export default function MemberForm() {
     if (!isEdit) {
       setUsername(v.toLowerCase().replace(/\s+/g, ''));
       if (v) {
-        const cap = v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
-        setPassword(`Udom@${cap}`);
+        setPassword(`udom@${v.toLowerCase().replace(/\s+/g, '')}`);
       }
     }
   };

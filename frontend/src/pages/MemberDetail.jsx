@@ -116,7 +116,7 @@ export default function MemberDetail() {
                     <span className="badge badge-active">✓ Has account</span>
                     <div className="mt-2 text-xs bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-blue-800">
                       <div><span className="font-semibold">Username:</span> {member.account_username}</div>
-                      <div className="mt-0.5"><span className="font-semibold">Default password:</span> Udom@{member.last_name?.charAt(0).toUpperCase() + member.last_name?.slice(1).toLowerCase()}</div>
+                      <div className="mt-0.5"><span className="font-semibold">Default password:</span> udom@{member.last_name?.toLowerCase()}</div>
                       <div className="text-blue-500 mt-1 text-[10px]">Share these with the member if they haven't changed their password yet.</div>
                     </div>
                   </div>
