@@ -12,7 +12,7 @@ from .serializers import (
     GroupSerializer, ChoirSerializer, UserRoleSerializer
 )
 from .utils import get_role, can_manage_roles
-from .permissions import IsPastorOrAdmin, CanManageMembers
+from .permissions import IsPastorOrAdmin, IsStaffAdmin, CanManageMembers
 
 
 class DepartmentViewSet(viewsets.ModelViewSet):
@@ -182,7 +182,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
 
 class UserRoleViewSet(viewsets.ViewSet):
-    permission_classes = [IsPastorOrAdmin]
+    permission_classes = [IsStaffAdmin]
 
     def list(self, request):
         users = list(User.objects.select_related('role_profile').order_by('username'))

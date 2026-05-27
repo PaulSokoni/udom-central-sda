@@ -10,6 +10,14 @@ class IsPastorOrAdmin(BasePermission):
         )
 
 
+class IsStaffAdmin(BasePermission):
+    """Grants access only to staff/superuser admins (not pastors)."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user and request.user.is_authenticated and request.user.is_staff
+        )
+
+
 class CanManageMembers(BasePermission):
     """Pastor, admin, and secretary can register/edit members."""
     def has_permission(self, request, view):

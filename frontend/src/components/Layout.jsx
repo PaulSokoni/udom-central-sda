@@ -34,7 +34,7 @@ function buildNav(user) {
         { to: '/members', icon: '◈', label: 'All Members' },
         canManageMembers && { to: '/members/new', icon: '⊕', label: 'Register Member' },
         { to: '/groups', icon: '⬡', label: 'Depts & Groups' },
-        isSuper && { to: '/role-management', icon: '◆', label: 'Assign Roles' },
+        user.is_staff && { to: '/role-management', icon: '◆', label: 'Assign Roles' },
       ].filter(Boolean),
     },
     {

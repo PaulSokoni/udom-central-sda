@@ -78,10 +78,78 @@ export default function MyProfile() {
 
   if (!user?.member_pk) {
     return (
-      <div className="text-center py-16">
-        <div className="text-4xl mb-4">👤</div>
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">No Member Profile Linked</h2>
-        <p className="text-gray-500 text-sm">Your user account is not yet linked to a member record. Please contact the church administrator.</p>
+      <div>
+        <h2 className="text-xl font-bold mb-5">My Profile</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="space-y-4">
+            <div className="card p-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-blue-900 text-white flex items-center justify-center text-3xl font-bold mx-auto mb-3">
+                {(user?.full_name || user?.username || '?')[0].toUpperCase()}
+              </div>
+              <h2 className="font-bold text-lg">{user?.full_name || user?.username}</h2>
+              <p className="text-sm text-gray-500 mt-1">@{user?.username}</p>
+              <div className="mt-2">
+                <span className="badge badge-active">{user?.is_staff ? 'System Administrator' : (user?.role || 'Member')}</span>
+              </div>
+            </div>
+            <div className="card p-4 text-sm text-gray-500 text-center">
+              This account is not linked to a member record.
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="card border-2 border-blue-100">
+              <div className="card-header bg-blue-50">
+                <h3 className="text-sm font-semibold text-blue-900">Change Password</h3>
+              </div>
+              <div className="card-body">
+                <form onSubmit={submitPasswordChange}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="label">Current Password *</label>
+                      <div className="relative">
+                        <input className="input pr-14" type={showOld ? 'text' : 'password'}
+                          value={pwForm.old_password} onChange={e => setPwForm(f => ({ ...f, old_password: e.target.value }))}
+                          required autoComplete="current-password" placeholder="Current password" />
+                        <button type="button" onClick={() => setShowOld(s => !s)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-700 font-medium">
+                          {showOld ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label">New Password *</label>
+                      <div className="relative">
+                        <input className="input pr-14" type={showNew ? 'text' : 'password'}
+                          value={pwForm.new_password} onChange={e => setPwForm(f => ({ ...f, new_password: e.target.value }))}
+                          required autoComplete="new-password" placeholder="New password" />
+                        <button type="button" onClick={() => setShowNew(s => !s)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-700 font-medium">
+                          {showNew ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label">Confirm New Password *</label>
+                      <input className={`input${pwForm.confirm && pwForm.confirm !== pwForm.new_password ? ' border-red-400' : ''}`}
+                        type="password" value={pwForm.confirm}
+                        onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                        required autoComplete="new-password" placeholder="Repeat new password" />
+                      {pwForm.confirm && pwForm.confirm !== pwForm.new_password && (
+                        <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <button type="submit" disabled={pwSaving} className="btn btn-primary">
+                      {pwSaving ? 'Saving…' : 'Update Password'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
