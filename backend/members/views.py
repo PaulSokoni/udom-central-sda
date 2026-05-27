@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from .models import Member, Department, Group, Choir, UserRole
 from .serializers import (
@@ -156,6 +158,27 @@ class MemberViewSet(viewsets.ModelViewSet):
             'location_name': member.location_name, 'location_sharing': member.location_sharing,
             'location_updated_at': member.location_updated_at,
         })
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated], url_path='change_password')
+    def change_password(self, request):
+        user = request.user
+        old_password = request.data.get('old_password', '')
+        new_password = request.data.get('new_password', '')
+
+        if not old_password or not new_password:
+            return Response({'detail': 'Both old and new passwords are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(old_password):
+            return Response({'old_password': ['Current password is incorrect.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
+            return Response({'new_password': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'detail': 'Password changed successfully.'})
 
 
 class UserRoleViewSet(viewsets.ViewSet):

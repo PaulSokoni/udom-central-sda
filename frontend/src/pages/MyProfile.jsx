@@ -25,6 +25,10 @@ export default function MyProfile() {
   const [contributions, setContributions] = useState([]);
   const [prayerCount, setPrayerCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pwForm, setPwForm] = useState({ old_password: '', new_password: '', confirm: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
 
   useEffect(() => {
     if (!user?.member_pk) { setLoading(false); return; }
@@ -42,6 +46,33 @@ export default function MyProfile() {
     }).catch(() => toast.error('Failed to load profile'))
     .finally(() => setLoading(false));
   }, [user?.member_pk]);
+
+  const submitPasswordChange = async e => {
+    e.preventDefault();
+    if (pwForm.new_password !== pwForm.confirm) {
+      toast.error('New passwords do not match.');
+      return;
+    }
+    if (pwForm.new_password.length < 8) {
+      toast.error('Password must be at least 8 characters.');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await api.post('/members/change_password/', {
+        old_password: pwForm.old_password,
+        new_password: pwForm.new_password,
+      });
+      toast.success('Password changed. Please sign in again with your new password.');
+      setPwForm({ old_password: '', new_password: '', confirm: '' });
+    } catch (err) {
+      const data = err.response?.data || {};
+      const msg = data.old_password?.[0] || data.new_password?.[0] || data.detail || 'Failed to change password.';
+      toast.error(msg);
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   if (loading) return <div className="text-center py-16 text-gray-400">Loading your profile…</div>;
 
@@ -147,6 +178,72 @@ export default function MyProfile() {
             <div className="card-body grid grid-cols-2 gap-4">
               <InfoRow label="Contact Name" value={member.emergency_contact_name} />
               <InfoRow label="Contact Phone" value={member.emergency_contact_phone} />
+            </div>
+          </div>
+
+          <div className="card border-2 border-blue-100">
+            <div className="card-header bg-blue-50">
+              <h3 className="text-sm font-semibold text-blue-900">Change Password</h3>
+            </div>
+            <div className="card-body">
+              <form onSubmit={submitPasswordChange}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="label">Current Password *</label>
+                    <div className="relative">
+                      <input
+                        className="input pr-14"
+                        type={showOld ? 'text' : 'password'}
+                        value={pwForm.old_password}
+                        onChange={e => setPwForm(f => ({ ...f, old_password: e.target.value }))}
+                        required autoComplete="current-password"
+                        placeholder="Current password"
+                      />
+                      <button type="button" onClick={() => setShowOld(s => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-700 font-medium">
+                        {showOld ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label">New Password *</label>
+                    <div className="relative">
+                      <input
+                        className="input pr-14"
+                        type={showNew ? 'text' : 'password'}
+                        value={pwForm.new_password}
+                        onChange={e => setPwForm(f => ({ ...f, new_password: e.target.value }))}
+                        required autoComplete="new-password"
+                        placeholder="New password"
+                      />
+                      <button type="button" onClick={() => setShowNew(s => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-700 font-medium">
+                        {showNew ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Minimum 8 characters.</p>
+                  </div>
+                  <div>
+                    <label className="label">Confirm New Password *</label>
+                    <input
+                      className={`input${pwForm.confirm && pwForm.confirm !== pwForm.new_password ? ' border-red-400' : ''}`}
+                      type="password"
+                      value={pwForm.confirm}
+                      onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                      required autoComplete="new-password"
+                      placeholder="Repeat new password"
+                    />
+                    {pwForm.confirm && pwForm.confirm !== pwForm.new_password && (
+                      <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <button type="submit" disabled={pwSaving} className="btn btn-primary">
+                    {pwSaving ? 'Saving…' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 

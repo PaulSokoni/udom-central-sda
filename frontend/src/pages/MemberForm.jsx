@@ -59,13 +59,12 @@ export default function MemberForm() {
   });
   const [departments, setDepartments] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [dobError, setDobError] = useState('');
+  const [baptismDateError, setBaptismDateError] = useState('');
+  const [membershipDateError, setMembershipDateError] = useState('');
 
-  // Login account state
-  const [createAccount, setCreateAccount] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [existingAccount, setExistingAccount] = useState(null); // { username } if member already has one
 
   useEffect(() => {
     api.get('/departments/').then(r => setDepartments(r.data.results || r.data));
@@ -85,34 +84,82 @@ export default function MemberForm() {
           emergency_contact_phone: d.emergency_contact_phone || '',
           notes: d.notes || '', registered_by: d.registered_by || '',
         });
-        if (d.has_account) {
-          setExistingAccount({ username: d.account_username });
-        }
       });
     }
   }, [id, isEdit]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // Auto-suggest username from first + last name
-  const handleFirstNameChange = v => {
-    set('first_name', v);
-    if (!isEdit && !username) {
-      setUsername((v + (form.last_name ? '.' + form.last_name : '')).toLowerCase().replace(/\s+/g, ''));
-    }
-  };
+  const handleFirstNameChange = v => set('first_name', v);
+
   const handleLastNameChange = v => {
     set('last_name', v);
-    if (!isEdit && !username) {
-      setUsername(((form.first_name || '') + (v ? '.' + v : '')).toLowerCase().replace(/\s+/g, ''));
+    if (!isEdit) {
+      setUsername(v.toLowerCase().replace(/\s+/g, ''));
+      if (v) {
+        const cap = v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+        setPassword(`Udom@${cap}`);
+      }
     }
+  };
+
+  const handleDobChange = v => {
+    set('date_of_birth', v);
+    if (!v) { setDobError(''); return; }
+    const dob = new Date(v);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (dob > today) {
+      setDobError('Date of birth cannot be in the future.');
+    } else {
+      const age = today.getFullYear() - dob.getFullYear() -
+        ((today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) ? 1 : 0);
+      setDobError(age > 120 ? 'Age cannot exceed 120 years.' : '');
+    }
+  };
+
+  const checkMembershipVsBaptism = (membershipDate, baptismDate) => {
+    if (membershipDate && baptismDate && membershipDate < baptismDate) {
+      setMembershipDateError('Membership date cannot be before baptism date.');
+    } else {
+      setMembershipDateError('');
+    }
+  };
+
+  const handleBaptismDateChange = v => {
+    set('baptism_date', v);
+    if (v) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (new Date(v) > today) {
+        setBaptismDateError('Baptism date cannot be in the future.');
+      } else {
+        setBaptismDateError('');
+      }
+    } else {
+      setBaptismDateError('');
+    }
+    checkMembershipVsBaptism(form.membership_date, v);
+  };
+
+  const handleMembershipDateChange = v => {
+    set('membership_date', v);
+    checkMembershipVsBaptism(v, form.baptism_date);
   };
 
   const submit = async e => {
     e.preventDefault();
 
-    if (createAccount && (!username.trim() || !password.trim())) {
-      toast.error('Please enter both username and password for the login account.');
+    if (dobError) {
+      toast.error(dobError);
+      return;
+    }
+
+    if (baptismDateError) {
+      toast.error(baptismDateError);
+      return;
+    }
+
+    if (membershipDateError) {
+      toast.error(membershipDateError);
       return;
     }
 
@@ -142,7 +189,7 @@ export default function MemberForm() {
     if (!payload.membership_date) {
       payload.membership_date = new Date().toISOString().split('T')[0];
     }
-    if (createAccount && username && password) {
+    if (!isEdit && username && password) {
       payload.username = username.trim();
       payload.password = password;
     }
@@ -154,7 +201,7 @@ export default function MemberForm() {
         navigate(`/members/${id}`);
       } else {
         const r = await api.post('/members/', payload);
-        toast.success(`Member registered: ${r.data.member_id}${createAccount ? ' — Login account created.' : ''}`);
+        toast.success(`Member registered: ${r.data.member_id}${username ? ` — Login: ${username} / ${password}` : ''}`);
         navigate(`/members/${r.data.id}`);
       }
     } catch (err) {
@@ -209,16 +256,35 @@ export default function MemberForm() {
                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                           </select>
                         ) : (
-                          <input
-                            className="input" type={f.type || 'text'} value={form[f.name]}
-                            onChange={e => {
-                              if (f.name === 'first_name') handleFirstNameChange(e.target.value);
-                              else if (f.name === 'last_name') handleLastNameChange(e.target.value);
-                              else set(f.name, e.target.value);
-                            }}
-                            placeholder={f.placeholder} required={f.required}
-                            max={f.type === 'date' && f.name === 'date_of_birth' ? new Date().toISOString().split('T')[0] : undefined}
-                          />
+                          <>
+                            <input
+                              className={`input${
+                                (f.name === 'date_of_birth' && dobError) ||
+                                (f.name === 'baptism_date' && baptismDateError) ||
+                                (f.name === 'membership_date' && membershipDateError)
+                                  ? ' border-red-400 focus:border-red-400' : ''
+                              }`}
+                              type={f.type || 'text'} value={form[f.name]}
+                              onChange={e => {
+                                if (f.name === 'first_name') handleFirstNameChange(e.target.value);
+                                else if (f.name === 'last_name') handleLastNameChange(e.target.value);
+                                else if (f.name === 'date_of_birth') handleDobChange(e.target.value);
+                                else if (f.name === 'baptism_date') handleBaptismDateChange(e.target.value);
+                                else if (f.name === 'membership_date') handleMembershipDateChange(e.target.value);
+                                else set(f.name, e.target.value);
+                              }}
+                              placeholder={f.placeholder} required={f.required}
+                            />
+                            {f.name === 'date_of_birth' && dobError && (
+                              <p className="text-xs text-red-500 mt-1">{dobError}</p>
+                            )}
+                            {f.name === 'baptism_date' && baptismDateError && (
+                              <p className="text-xs text-red-500 mt-1">{baptismDateError}</p>
+                            )}
+                            {f.name === 'membership_date' && membershipDateError && (
+                              <p className="text-xs text-red-500 mt-1">{membershipDateError}</p>
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -229,78 +295,12 @@ export default function MemberForm() {
           </div>
         ))}
 
-        {/* Login Account Section */}
-        <div className="card mb-5 border-2 border-blue-100">
-          <div className="card-header bg-blue-50">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox" id="createAccount"
-                checked={createAccount}
-                onChange={e => setCreateAccount(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-800 cursor-pointer"
-              />
-              <label htmlFor="createAccount" className="font-semibold text-sm text-blue-900 cursor-pointer">
-                🔑 {isEdit ? 'Update / Create Login Account' : 'Create System Login Account'}
-              </label>
-            </div>
-            {existingAccount && (
-              <span className="badge badge-active text-xs">
-                Has account: {existingAccount.username}
-              </span>
-            )}
+        {!isEdit && username && password && (
+          <div className="mb-5 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+            A login account will be created automatically — share these credentials with the member:<br />
+            <strong>Username:</strong> {username} &nbsp;·&nbsp; <strong>Password:</strong> {password}
           </div>
-
-          {createAccount && (
-            <div className="card-body">
-              {existingAccount && (
-                <div className="mb-4 px-4 py-3 bg-amber-50 border-l-4 border-amber-400 text-amber-800 text-sm rounded">
-                  ⚠️ This member already has a login account (<strong>{existingAccount.username}</strong>).
-                  Filling in the fields below will update their username and password.
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="label">Username *</label>
-                  <input
-                    className="input"
-                    value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    placeholder="e.g. john.doe"
-                    autoComplete="off"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">The member will use this to log in.</p>
-                </div>
-                <div>
-                  <label className="label">Password *</label>
-                  <div className="relative">
-                    <input
-                      className="input pr-16"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Set a password"
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(s => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-700 font-medium"
-                    >
-                      {showPassword ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">Minimum 8 characters recommended.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!createAccount && (
-            <div className="px-5 py-3 text-sm text-gray-400">
-              Check the box above to {existingAccount ? 'update the login credentials for' : 'give this member access to'} the system.
-            </div>
-          )}
-        </div>
+        )}
 
         <div className="flex gap-3">
           <button type="submit" disabled={saving} className="btn btn-primary btn-lg">

@@ -101,6 +101,15 @@ class MemberSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Please enter a valid date of birth (age cannot exceed 120 years).')
         return value
 
+    def validate_baptism_date(self, value):
+        if value is None:
+            return value
+        from django.utils import timezone
+        today = timezone.now().date()
+        if value > today:
+            raise serializers.ValidationError('Baptism date cannot be in the future.')
+        return value
+
     def validate_photo(self, value):
         if value:
             allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -109,6 +118,15 @@ class MemberSerializer(serializers.ModelSerializer):
             if value.size > 5 * 1024 * 1024:
                 raise serializers.ValidationError('Photo must be smaller than 5 MB.')
         return value
+
+    def validate(self, data):
+        baptism_date = data.get('baptism_date') or getattr(self.instance, 'baptism_date', None)
+        membership_date = data.get('membership_date') or getattr(self.instance, 'membership_date', None)
+        if baptism_date and membership_date and membership_date < baptism_date:
+            raise serializers.ValidationError(
+                {'membership_date': 'Membership date cannot be before baptism date.'}
+            )
+        return data
 
     def validate_username(self, value):
         if value and User.objects.filter(username=value).exists():
