@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py create_admin; gunicorn udom_central.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --log-level debug --capture-output
+web: python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py create_admin; gunicorn udom_central.wsgi:application
