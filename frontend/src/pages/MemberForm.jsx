@@ -67,6 +67,8 @@ export default function MemberForm() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [hasAccount, setHasAccount] = useState(false);
+  const [createAccountForExisting, setCreateAccountForExisting] = useState(false);
 
   useEffect(() => {
     api.get('/departments/').then(r => setDepartments(r.data.results || r.data));
@@ -86,6 +88,11 @@ export default function MemberForm() {
           emergency_contact_phone: d.emergency_contact_phone || '',
           notes: d.notes || '', registered_by: d.registered_by || '',
         });
+        setHasAccount(d.has_account || false);
+        if (!d.has_account && d.last_name) {
+          setUsername(d.last_name.toLowerCase().replace(/\s+/g, ''));
+          setPassword(`udom@${d.last_name.toLowerCase().replace(/\s+/g, '')}`);
+        }
       });
     }
   }, [id, isEdit]);
@@ -199,6 +206,10 @@ export default function MemberForm() {
       payload.username = username.trim();
       payload.password = password;
     }
+    if (isEdit && !hasAccount && createAccountForExisting && username && password) {
+      payload.username = username.trim();
+      payload.password = password;
+    }
 
     try {
       if (isEdit) {
@@ -307,6 +318,40 @@ export default function MemberForm() {
           <div className="mb-5 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
             A login account will be created automatically — share these credentials with the member:<br />
             <strong>Username:</strong> {username} &nbsp;·&nbsp; <strong>Password:</strong> {password}
+          </div>
+        )}
+
+        {isEdit && !hasAccount && (
+          <div className="card mb-5 border-2 border-amber-100">
+            <div className="card-header bg-amber-50 flex items-center gap-3">
+              <input
+                type="checkbox" id="createAccountForExisting"
+                checked={createAccountForExisting}
+                onChange={e => setCreateAccountForExisting(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+              />
+              <label htmlFor="createAccountForExisting" className="font-semibold text-sm text-amber-900 cursor-pointer">
+                Create Login Account for this member
+              </label>
+            </div>
+            {createAccountForExisting && (
+              <div className="card-body">
+                <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                  Default credentials — share with the member:<br />
+                  <strong>Username:</strong> {username} &nbsp;·&nbsp; <strong>Password:</strong> {password}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Username *</label>
+                    <input className="input" value={username} onChange={e => setUsername(e.target.value)} autoComplete="off" />
+                  </div>
+                  <div>
+                    <label className="label">Password *</label>
+                    <input className="input" type="text" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
