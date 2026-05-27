@@ -89,6 +89,18 @@ class MemberSerializer(serializers.ModelSerializer):
     def get_account_username(self, obj):
         return obj.user.username if obj.user else None
 
+    def validate_date_of_birth(self, value):
+        if value is None:
+            return value
+        from django.utils import timezone
+        today = timezone.now().date()
+        if value > today:
+            raise serializers.ValidationError('Date of birth cannot be in the future.')
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        if age > 120:
+            raise serializers.ValidationError('Please enter a valid date of birth (age cannot exceed 120 years).')
+        return value
+
     def validate_photo(self, value):
         if value:
             allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']

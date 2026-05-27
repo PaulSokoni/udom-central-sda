@@ -110,7 +110,10 @@ class Member(models.Model):
         if self.date_of_birth:
             today = timezone.now().date()
             b = self.date_of_birth
-            return today.year - b.year - ((today.month, today.day) < (b.month, b.day))
+            if b > today:
+                return None
+            years = today.year - b.year - ((today.month, today.day) < (b.month, b.day))
+            return years if years >= 0 else None
         return None
 
     def __str__(self):

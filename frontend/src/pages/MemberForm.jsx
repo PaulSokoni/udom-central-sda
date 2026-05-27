@@ -116,6 +116,22 @@ export default function MemberForm() {
       return;
     }
 
+    if (form.date_of_birth) {
+      const dob = new Date(form.date_of_birth);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dob > today) {
+        toast.error('Date of birth cannot be in the future.');
+        return;
+      }
+      const age = today.getFullYear() - dob.getFullYear() -
+        ((today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) ? 1 : 0);
+      if (age > 120) {
+        toast.error('Please enter a valid date of birth (age cannot exceed 120 years).');
+        return;
+      }
+    }
+
     setSaving(true);
     const payload = { ...form };
     // Convert empty strings to null for nullable fields
@@ -201,6 +217,7 @@ export default function MemberForm() {
                               else set(f.name, e.target.value);
                             }}
                             placeholder={f.placeholder} required={f.required}
+                            max={f.type === 'date' && f.name === 'date_of_birth' ? new Date().toISOString().split('T')[0] : undefined}
                           />
                         )}
                       </>
