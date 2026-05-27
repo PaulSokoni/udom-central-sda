@@ -113,10 +113,12 @@ class MemberSerializer(serializers.ModelSerializer):
         username = validated_data.pop('username', '').strip()
         password = validated_data.pop('password', '').strip()
 
+        if username and password:
+            self._validate_password(password)
+
         member = Member.objects.create(**validated_data)
 
         if username and password:
-            self._validate_password(password)
             user = User.objects.create_user(
                 username=username,
                 password=password,

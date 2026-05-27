@@ -134,7 +134,9 @@ export default function MemberForm() {
         navigate(`/members/${r.data.id}`);
       }
     } catch (err) {
-      const detail = err.response?.data?.username?.[0] || err.response?.data?.detail || 'Failed to save. Check required fields.';
+      const data = err.response?.data || {};
+      const detail = data.username?.[0] || data.password?.[0] || data.detail ||
+        Object.values(data).flat().find(v => typeof v === 'string') || 'Failed to save. Check required fields.';
       toast.error(detail);
     } finally {
       setSaving(false);
