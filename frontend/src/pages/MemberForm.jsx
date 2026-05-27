@@ -130,11 +130,16 @@ export default function MemberForm() {
   const handleBaptismDateChange = v => {
     set('baptism_date', v);
     if (v) {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      if (new Date(v) > today) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (v > todayStr) {
         setBaptismDateError('Baptism date cannot be in the future.');
       } else {
         setBaptismDateError('');
+      }
+      // Push membership date up to match baptism date if it falls below it
+      if (!form.membership_date || form.membership_date < v) {
+        set('membership_date', v);
+        setMembershipDateError('');
       }
     } else {
       setBaptismDateError('');
@@ -276,6 +281,8 @@ export default function MemberForm() {
                                 else set(f.name, e.target.value);
                               }}
                               placeholder={f.placeholder} required={f.required}
+                              max={f.name === 'date_of_birth' || f.name === 'baptism_date' ? today : undefined}
+                              min={f.name === 'membership_date' ? (form.baptism_date || undefined) : undefined}
                             />
                             {f.name === 'date_of_birth' && dobError && (
                               <p className="text-xs text-red-500 mt-1">{dobError}</p>
