@@ -118,6 +118,10 @@ export default function MemberForm() {
 
     setSaving(true);
     const payload = { ...form };
+    // Convert empty strings to null for nullable FK and date fields
+    ['department', 'date_of_birth', 'baptism_date', 'membership_date'].forEach(k => {
+      if (payload[k] === '') payload[k] = null;
+    });
     if (createAccount && username && password) {
       payload.username = username.trim();
       payload.password = password;
