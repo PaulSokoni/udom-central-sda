@@ -22,13 +22,14 @@ import Doctrines from './pages/Doctrines';
 import MyProfile from './pages/MyProfile';
 import RoleManagement from './pages/RoleManagement';
 import VisitorRegistration from './pages/VisitorRegistration';
+import Home from './pages/Home';
 
 function ProtectedRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   const isSuper = user.is_staff || user.role === 'pastor';
-  if (adminOnly && !isSuper) return <Navigate to="/" replace />;
+  if (adminOnly && !isSuper) return <Navigate to="/dashboard" replace />;
   return <Layout>{children}</Layout>;
 }
 
@@ -38,8 +39,9 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Home />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/members" element={<ProtectedRoute><MemberList /></ProtectedRoute>} />
       <Route path="/members/new" element={<ProtectedRoute adminOnly><MemberForm /></ProtectedRoute>} />
       <Route path="/members/:id" element={<ProtectedRoute><MemberDetail /></ProtectedRoute>} />
@@ -63,7 +65,7 @@ function AppRoutes() {
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/role-management" element={<ProtectedRoute adminOnly><RoleManagement /></ProtectedRoute>} />
       <Route path="/visitor-register" element={<VisitorRegistration />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={user ? '/dashboard' : '/'} replace />} />
     </Routes>
   );
 }
